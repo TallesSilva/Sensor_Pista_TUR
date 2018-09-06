@@ -1,0 +1,161 @@
+C51 COMPILER V9.57.0.0   EXEMPLO_TIMER                                                     08/13/2018 17:00:40 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE EXEMPLO_TIMER
+OBJECT MODULE PLACED IN .\Objects\exemplo_timer.obj
+COMPILER INVOKED BY: D:\Programas\Keil C51\C51\BIN\C51.EXE exemplo_timer.c OPTIMIZE(8,SPEED) BROWSE INCDIR(D:\Programas\
+                    -Nordic Semiconductor\nRFgo SDK 2.3.0.10040\source_code\compiler\common;..\..\nrf24le1\nRF24LE1\libraries\nrf\source_code
+                    -\hal\nrf24le1;D:\Programas\Nordic Semiconductor\nRFgo SDK 2.3.0.10040\nrf;D:\Programas\Nordic Semiconductor\nRFgo SDK 2.
+                    -3.0.10040\source_code\hal) DEBUG OBJECTEXTEND PRINT(.\Listings\exemplo_timer.lst) TABS(2) OBJECT(.\Objects\exemplo_timer
+                    -.obj)
+
+line level    source
+
+*** WARNING C500 IN LINE 1 OF exemplo_timer.c: LICENSE ERROR (R230(2): CONNECT TO UVISION KERNEL FAILED)
+
+   1          #include<Nordic\reg24le1.h>
+   2          #include<stdint.h>
+   3          #include<nRF-SPICommands.h>
+   4          #include<timer0.h>
+   5          #include<hal_delay.h>
+   6          
+   7          //Endere?os
+   8          #define BROADCAST_ADDRESS '0'
+   9          #define MY_SUB_ADDRESS '2'
+  10          
+  11          //Comandos
+  12          #define INICIA_TIMER_CMD 'I'
+  13          #define DESLIGA_TIMER_CMD 'D'
+  14          #define LER_COUNTER_CMD 'R'
+  15          #define LER_BTN_FLAG_CMD 'B'
+  16          #define PING_ECO_CMD 'E'
+  17          #define RESET_TIMER 'A'
+  18          
+  19          //Pinos
+  20          #define LED_SISTEMA_ON P03
+  21          #define LED_ENVIO P05
+  22          #define LED_TIMER_ON P12
+  23          #define LED_AJUSTE P13
+  24          #define SENSOR P14
+  25          
+  26          
+  27          //Vari?veis
+  28          uint8_t btn_passou = 0;
+  29          uint16_t tempo1 = 0;
+  30          uint8_t i = 0;
+  31          
+  32          void setup(){
+  33   1        P0DIR = 0xD7; //1101 0111 - Pinos do Port0
+  34   1        P1DIR = 0xF3; //1111 0011 - Pinos do Port1
+  35   1      
+  36   1        rf_init(ADDR_HOST,ADDR_HOST, 92,
+  37   1                RF_DATA_RATE_2Mbps, RF_TX_POWER_0dBm); //Configura a rede RF
+  38   1      
+  39   1        setup_T0_ticks(6666, 60006);  //Configura o timer como descrito:
+  40   1                                      //a cada 5ms o timer estoura (4.9995)
+  41   1                                      //60 006 vezes ? o maximo que pode repetir este tempo
+  42   1                                      //4.9995 * 60 006 = 300 segundos = 5 minutos
+  43   1        prepare_T0(); //Ativa as interrup??es e deixa o timer pronto para ser iniciado
+  44   1      
+  45   1        //Pisca os Leds Indicando que o Dispositivo foi iniciado
+  46   1        LED_ENVIO = 1; delay_ms(100); LED_ENVIO = 0; delay_ms(100);
+  47   1        LED_ENVIO = 1; delay_ms(100); LED_ENVIO = 0; delay_ms(100);
+  48   1        //Manda uma msg indicando que esta ON
+  49   1        LED_SISTEMA_ON = 1;
+  50   1      }
+C51 COMPILER V9.57.0.0   EXEMPLO_TIMER                                                     08/13/2018 17:00:40 PAGE 2   
+
+  51          
+  52          void avalia_comando(){
+  53   1          switch(rx_buf[1]){
+  54   2            case RESET_TIMER:
+  55   2              timer_count = 0;
+  56   2              tempo1 = 0;
+  57   2              LED_TIMER_ON = 0;
+  58   2              break;
+  59   2            case INICIA_TIMER_CMD:
+  60   2              timer_count = 0;
+  61   2              tempo1 = 0;
+  62   2              TR0=1; // Timer0 --> RUN
+  63   2              tx_buf[0] = MY_SUB_ADDRESS;
+  64   2              tx_buf[1] = 'o';
+  65   2              tx_buf[2] = 'n';
+  66   2              TX_Mode_NOACK(3);
+  67   2              LED_TIMER_ON = 1;
+  68   2              break;
+  69   2            case DESLIGA_TIMER_CMD:
+  70   2              TR0=0; // Timer0 --> STOP
+  71   2              tempo1 = 0;
+  72   2              timer_count = 0;
+  73   2              LED_TIMER_ON = 0;
+  74   2              break;
+  75   2            case LER_COUNTER_CMD:
+  76   2              tx_buf[0] = MY_SUB_ADDRESS;
+  77   2              tx_buf[1] = LER_COUNTER_CMD;
+  78   2              tx_buf[2] = (uint8_t) (tempo1 >> 8); //msb
+  79   2              tx_buf[3] = (uint8_t) (tempo1); //lsb
+  80   2              TX_Mode_NOACK(4);
+  81   2              LED_ENVIO=!LED_ENVIO;
+  82   2              break;
+  83   2            case PING_ECO_CMD:
+  84   2              tx_buf[0] = MY_SUB_ADDRESS;
+  85   2              for(i=1; i<payloadWidth; i++){
+  86   3                tx_buf[i] = rx_buf[i];
+  87   3              }
+  88   2              TX_Mode_NOACK(payloadWidth);
+  89   2              break;
+  90   2            default:
+  91   2              break;
+  92   2        }
+  93   1      }
+  94          
+  95          void main(){
+  96   1        setup();
+  97   1        while(1){
+  98   2          LED_AJUSTE = SENSOR;
+  99   2          if(SENSOR){
+ 100   3            btn_passou = 1;
+ 101   3            tempo1 = timer_count;
+ 102   3          }
+ 103   2          if(newPayload){
+ 104   3            newPayload = 0; sta = 0;
+ 105   3            if(rx_buf[0]==BROADCAST_ADDRESS){ //Se for uma mensagem para todo mundo
+ 106   4              avalia_comando();
+ 107   4            } else if(rx_buf[0]==MY_SUB_ADDRESS){ //Se for uma mensagem para o sensor
+ 108   4              avalia_comando();
+ 109   4            }
+ 110   3          }
+ 111   2        }
+ 112   1      }
+C51 COMPILER V9.57.0.0   EXEMPLO_TIMER                                                     08/13/2018 17:00:40 PAGE 3   
+
+ 113          
+ 114          /**************************************************/
+ 115          /********************TIMER*************************/
+ 116          void TMR0_IRQ(void) interrupt INTERRUPT_TMR0
+ 117          {
+ 118   1        if(!NOVT0)
+ 119   1        {
+ 120   2          timer_count++; // Acumula os tempos
+ 121   2          if(timer_count >= initial_timer_count){
+ 122   3              timer_elapsed = 1;
+ 123   3              timer_count = 0; // Reseta o contador
+ 124   3          }
+ 125   2          TH0= NBT0H;
+ 126   2          TL0= NBT0L;
+ 127   2        }
+ 128   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    970    ----
+   CONSTANT SIZE    =      5    ----
+   XDATA SIZE       =     65    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     14      21
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

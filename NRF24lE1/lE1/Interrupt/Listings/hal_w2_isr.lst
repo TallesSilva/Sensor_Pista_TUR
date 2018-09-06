@@ -1,0 +1,602 @@
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE HAL_W2_ISR
+OBJECT MODULE PLACED IN .\Objects\hal_w2_isr.obj
+COMPILER INVOKED BY: D:\Programas\Keil C51\C51\BIN\C51.EXE ..\..\..\nrf24le1\nRF24LE1\libraries\nrf\hal_w2_isr.c OPTIMIZ
+                    -E(8,SPEED) BROWSE INCDIR(..\..\..\nrf24le1\nRF24LE1\libraries;D:\Programas\Nordic Semiconductor\nRFgo SDK 2.3.0.10040\so
+                    -urce_code\compiler\common;D:\Programas\Nordic Semiconductor\nRFgo SDK 2.3.0.10040\source_code\hal\nrf24le1;D:\Programas\
+                    -Nordic Semiconductor\nRFgo SDK 2.3.0.10040\source_code\hal) DEBUG OBJECTEXTEND PRINT(.\Listings\hal_w2_isr.lst) TABS(2) 
+                    -OBJECT(.\Objects\hal_w2_isr.obj)
+
+line level    source
+
+*** WARNING C500 IN LINE 1 OF ..\..\..\nrf24le1\nRF24LE1\libraries\nrf\hal_w2_isr.c: LICENSE ERROR (R230(2): CONNECT TO 
+             -UVISION KERNEL FAILED)
+
+   1          /* Copyright (c) 2009 Nordic Semiconductor. All Rights Reserved.
+   2           *
+   3           * The information contained herein is confidential property of Nordic
+   4           * Semiconductor ASA.Terms and conditions of usage are described in detail
+   5           * in NORDIC SEMICONDUCTOR STANDARD SOFTWARE LICENSE AGREEMENT.
+   6           *
+   7           * Licensees are granted free, non-transferable use of the information. NO
+   8           * WARRENTY of ANY KIND is provided. This heading must NOT be removed from
+   9           * the file.
+  10           *
+  11           * $LastChangedRevision: 2503 $
+  12           */
+  13          
+  14          /** @file
+  15           * @brief Implementation of hal_w2
+  16           */
+  17          
+  18          #include <stdint.h>
+  19          #include <stdbool.h>
+  20          
+  21          #include "nrf24le1.h"
+  22          #include "nordic_common.h"
+  23          #include "hal_w2_isr.h"
+  24          #include "hal_delay.h"
+  25          
+  26          #define BROADCAST_ENABLE      7     // W2CON0 register bit 7
+  27          #define CLOCK_STOP            6     // W2CON0 register bit 6
+  28          #define X_STOP                5     // W2CON0 register bit 5
+  29          #define X_START               4     // W2CON0 register bit 4
+  30          #define CLOCK_FREQUENCY_1     3     // W2CON0 register bit 3
+  31          #define CLOCK_FREQUENCY_0     2     // W2CON0 register bit 2
+  32          #define MASTER_SELECT         1     // W2CON0 register bit 1
+  33          #define WIRE_2_ENABLE         0     // W2CON0 register bit 0
+  34            uint8_t w2_status;
+  35            bool data_ready;
+  36          void hal_w2_soft_reset();
+  37          
+  38          /* Slave specific functions */
+  39          uint8_t hal_w2_wait_data_ready_ISR(void)
+  40          {
+  41   1          data_ready=0;
+  42   1          while (!data_ready); // deadlock avoidance may needed.
+  43   1          return w2_status;
+  44   1      }
+  45          void I2C_IRQ_handler (void)
+  46          {
+  47   1      
+  48   1        w2_status = W2CON1;
+  49   1        data_ready = (w2_status & W2CON1_FLAG_DATA_READY);
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 2   
+
+  50   1      
+  51   1      }
+  52          void hal_w2_respond_to_gen_adr(bool resp_gen)
+  53          {
+  54   1        if(resp_gen)
+  55   1        {
+  56   2          W2CON0 = W2CON0 | (1 << BROADCAST_ENABLE);  // Set "broadcastEnable" bit
+  57   2        }
+  58   1        else
+  59   1        {
+  60   2          W2CON0 = W2CON0 & ~(1 << BROADCAST_ENABLE); // Clear "broadcastEnable" bit
+  61   2        }
+  62   1      }
+  63          
+  64          void hal_w2_alter_clock(bool alt_clk)
+  65          {
+  66   1        if(alt_clk)
+  67   1        {
+  68   2          W2CON0 = W2CON0 | (1 << CLOCK_STOP);      // Set "clockStop" bit
+  69   2        }
+  70   1        else
+  71   1        {
+  72   2          W2CON0 = W2CON0 & ~(1 << CLOCK_STOP);     // Clear "clockStop" bit
+  73   2        }
+  74   1      }
+  75          
+  76          void hal_w2_irq_stop_cond_enable(bool stop_cond)
+  77          {
+  78   1        if(stop_cond)
+  79   1        {
+  80   2          W2CON0 = W2CON0 & ~(1 << X_STOP);         // Clear "xStop" bit
+  81   2        }
+  82   1        else
+  83   1        {
+  84   2          W2CON0 = W2CON0 | (1 << X_STOP);          // Set "xStop" bit
+  85   2        }
+  86   1      }
+  87          
+  88          void hal_w2_irq_adr_match_enable(bool addr_match)
+  89          {
+  90   1        if(addr_match)
+  91   1        {
+  92   2          W2CON0 = W2CON0 & ~(1 << X_START);        // Clear "xStart" bit
+  93   2        }
+  94   1        else
+  95   1        {
+  96   2          W2CON0 = W2CON0 | (1 << X_START);         // Set "xStart" bit
+  97   2        }
+  98   1      }
+  99          
+ 100          void hal_w2_set_slave_address(uint8_t address)
+ 101          {
+ 102   1        W2SADR = (address & 0x7F);                  // Set 7 bit adress of the slave
+ 103   1      }
+ 104          
+ 105          /* General functions */
+ 106          
+ 107          void hal_w2_set_clk_freq(hal_w2_clk_freq_t freq)
+ 108          {
+ 109   1        W2CON0 = (W2CON0 & 0xF3) | (((uint8_t)freq) << CLOCK_FREQUENCY_0);
+ 110   1      }                                             // Update "clockFrequency" bits
+ 111          
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 3   
+
+ 112          void hal_w2_set_op_mode(hal_w2_op_mode_t mode)
+ 113          {
+ 114   1        if(mode == HAL_W2_MASTER)                   // Check for master mode
+ 115   1        {
+ 116   2          W2CON0 = W2CON0 | (1 << MASTER_SELECT);   // Set "masterSelect" bit
+ 117   2        }
+ 118   1        else
+ 119   1        {
+ 120   2          W2CON0 = W2CON0 & ~(1 << MASTER_SELECT);  // Clear "masterSelect" bit
+ 121   2        }
+ 122   1      }
+ 123          
+ 124          void hal_w2_enable(bool en)
+ 125          {
+ 126   1        if(en)
+ 127   1        {
+ 128   2          W2CON0 = W2CON0 | (1 << WIRE_2_ENABLE);   // Set "wire2Enable" bit
+ 129   2        }
+ 130   1        else
+ 131   1        {
+ 132   2          W2CON0 = W2CON0 & ~(1 << WIRE_2_ENABLE);  // Clear "wire2Enable" bit
+ 133   2        }
+ 134   1      }
+ 135          
+ 136          void hal_w2_all_irq_enable(bool irq)
+ 137          { /* In this function the standard "read-modify-write" is not used because
+ 138   1           bit 4:0 (the status bits) in W2CON1 are cleared when read. These bits
+ 139   1           are read only so they can not be modified. */
+ 140   1        if(irq)
+ 141   1        {
+ 142   2          W2CON1 = ~(BIT_5);                        // Clear "maskIrq" bit
+ 143   2        }
+ 144   1        else
+ 145   1        {
+ 146   2          W2CON1 = BIT_5;                           // Set "maskIrq" bit
+ 147   2        }
+ 148   1      }
+ 149          
+ 150          void hal_w2_configure_master(hal_w2_clk_freq_t mode)
+ 151          {
+ 152   1        hal_w2_enable(true);
+ 153   1        hal_w2_set_clk_freq(mode);
+ 154   1        hal_w2_set_op_mode(HAL_W2_MASTER);
+ 155   1      
+ 156   1        INTEXP |= 0x04;                         // Enable 2 wire interrupts
+ 157   1        IEN1 |= 0x04; // Enable 2-wire complete interrupt
+ 158   1        W2CON1 = 0x00;
+ 159   1      
+ 160   1        hal_w2_all_irq_enable(true);             // Enable interrupts in the 2-wire
+ 161   1        SPIF = 0;
+ 162   1      }
+ 163          
+ 164          uint8_t hal_w2_wait_data_ready(void)
+ 165          {
+ 166   1        uint32_t timeout_counter = 0x0FF;
+ 167   1        uint8_t w2_status;
+ 168   1        bool data_ready;
+ 169   1        bool nack_received;
+ 170   1      
+ 171   1        do
+ 172   1        {
+ 173   2          w2_status = W2CON1;
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 4   
+
+ 174   2          data_ready = (w2_status & W2CON1_FLAG_DATA_READY);
+ 175   2          nack_received = (w2_status & W2CON1_FLAG_NACK);
+ 176   2          delay_us(10);
+ 177   2        } while (!data_ready);
+ 178   1      
+ 179   1      
+ 180   1        return w2_status;
+ 181   1      }
+ 182          
+ 183          bool hal_w2_init_transfer(uint8_t address, hal_w2_direction_t direction)
+ 184          {
+ 185   1        uint8_t w2_status;
+ 186   1      
+ 187   1        HAL_W2_ISSUE_START_COND;
+ 188   1        HAL_W2_WRITE((address << 1) | (uint8_t)direction);
+ 189   1      
+ 190   1        w2_status = hal_w2_wait_data_ready_ISR();
+ 191   1      
+ 192   1        if (w2_status & W2CON1_FLAG_NACK)
+ 193   1        {
+ 194   2          return false; // NACK received from slave or timeout
+ 195   2        }
+ 196   1        else
+ 197   1        {
+ 198   2          return true; // ACK received from slave
+ 199   2        }
+ 200   1      }
+ 201          
+ 202          bool hal_w2_write(uint8_t address, const uint8_t *data_ptr, uint8_t data_len)
+ 203          {
+ 204   1        bool ack_received;
+ 205   1        ack_received = hal_w2_init_transfer(address, HAL_W2_DIR_WRITE);
+ 206   1      
+ 207   1        while (data_len-- > 0 && ack_received == true)
+ 208   1        {
+ 209   2          uint8_t w2_status;
+ 210   2          HAL_W2_WRITE(*data_ptr++);
+ 211   2          w2_status = hal_w2_wait_data_ready_ISR();
+ 212   2          if (w2_status & W2CON1_FLAG_NACK)
+ 213   2          {
+ 214   3            ack_received = false;
+ 215   3          }
+ 216   2        }
+ 217   1      
+ 218   1        HAL_W2_ISSUE_STOP_COND;
+ 219   1      
+ 220   1        return ack_received;
+ 221   1      }
+ 222          
+ 223          bool hal_w2_read(uint8_t address, uint8_t *data_ptr, uint8_t data_len)
+ 224          {
+ 225   1        uint8_t w2_status;
+ 226   1        bool ack_received;
+ 227   1      
+ 228   1        ack_received = hal_w2_init_transfer(address, HAL_W2_DIR_READ);
+ 229   1      
+ 230   1        if (ack_received == false)
+ 231   1        {
+ 232   2          // This situation (NACK received on bus while trying to read from a slave) leads to a deadlock in the 
+             -2-wire interface.
+ 233   2          hal_w2_soft_reset(); // Workaround for the deadlock
+ 234   2        }
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 5   
+
+ 235   1      
+ 236   1      
+ 237   1        while (data_len-- && ack_received)
+ 238   1        {
+ 239   2          if (data_len == 0)
+ 240   2          {
+ 241   3            HAL_W2_ISSUE_STOP_COND;
+ 242   3          }
+ 243   2      
+ 244   2          w2_status = hal_w2_wait_data_ready_ISR();
+ 245   2      
+ 246   2          *data_ptr++ = HAL_W2_READ();
+ 247   2          ack_received = !(w2_status & W2CON1_FLAG_NACK);
+ 248   2        }
+ 249   1      
+ 250   1        return ack_received;
+ 251   1      }
+ 252          
+ 253          void hal_w2_soft_reset()
+ 254          {
+ 255   1      #ifndef W2_SOFT_RESET_NOT_AVAILABLE
+ 256   1        uint8_t pulsecount, w2_freq;
+ 257   1      
+ 258   1        // Store the selected 2-wire frequency
+ 259   1        w2_freq = W2CON0 & 0x0C;
+ 260   1        // Prepare the GPIO's to take over SDA & SCL
+ 261   1        HAL_W2_CLEAR_SDA_SCL;
+ 262   1        HAL_W2_OVERRIDE_SDA_SCL(1, 1);
+ 263   1        //P0DIR = 0xFF;
+ 264   1      
+ 265   1        // Reset 2-wire. SCL goes high.
+ 266   1        W2CON0 = 0x03;
+ 267   1        W2CON0 = 0x07;
+ 268   1      
+ 269   1        // Disable 2-wire.
+ 270   1        W2CON0 = 0x06;
+ 271   1      
+ 272   1        // SDA and SCL are now under software control, and both are high.
+ 273   1        // Complete first SCL pulse.
+ 274   1        //P0DIR = 0xEF;
+ 275   1        HAL_W2_OVERRIDE_SDA_SCL(1, 0);
+ 276   1      
+ 277   1        // SCL low
+ 278   1        delay_us(5);
+ 279   1        //P0DIR = 0xCF;
+ 280   1        HAL_W2_OVERRIDE_SDA_SCL(0, 0);
+ 281   1      
+ 282   1        // SDA low
+ 283   1        // Create SCL pulses for 7 more data bits and ACK/NACK
+ 284   1        delay_us(5);
+ 285   1        for( pulsecount = 0; pulsecount < 8; pulsecount++ )
+ 286   1        {
+ 287   2          //P0DIR = 0xDF;
+ 288   2          HAL_W2_OVERRIDE_SDA_SCL(0, 1);
+ 289   2          delay_us(5);
+ 290   2          //P0DIR = 0xCF;
+ 291   2          HAL_W2_OVERRIDE_SDA_SCL(0, 0);
+ 292   2          delay_us(5);
+ 293   2        }
+ 294   1      
+ 295   1        // Generating stop condition by driving SCL high
+ 296   1        delay_us(5);
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 6   
+
+ 297   1        //P0DIR = 0xDF;
+ 298   1        HAL_W2_OVERRIDE_SDA_SCL(0, 1);
+ 299   1      
+ 300   1        // Drive SDA high
+ 301   1        delay_us(5);
+ 302   1        //P0DIR = 0xFF;
+ 303   1        HAL_W2_OVERRIDE_SDA_SCL(1, 1);
+ 304   1      
+ 305   1        // Work-around done. Return control to 2-wire.
+ 306   1        W2CON0 = 0x07;
+ 307   1      
+ 308   1        // Reset 2-wire and return to master mode at the frequency selected before calling this function
+ 309   1        W2CON0 = 0x03;
+ 310   1        W2CON0 = 0x03 | w2_freq;
+ 311   1      #endif
+ 312   1      }
+ 313          
+ 314          
+ 315          /*********************MINHAS MODIFICAÇOES***********************/
+ 316          
+ 317          bool i2c_mpu_writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data_to_write){
+ 318   1          return i2c_mpu_writeBytes(devAddr, regAddr, 1, &data_to_write);
+ 319   1      }
+ 320          
+ 321          bool i2c_mpu_writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t data_len, uint8_t *data_ptr) {
+ 322   1      
+ 323   1          uint8_t w2_status;
+ 324   1          bool ack_received;
+ 325   1      
+ 326   1          ack_received = hal_w2_init_transfer(devAddr, HAL_W2_DIR_WRITE);
+ 327   1          HAL_W2_WRITE(regAddr);
+ 328   1          w2_status = hal_w2_wait_data_ready_ISR();
+ 329   1          if (w2_status & W2CON1_FLAG_NACK)
+ 330   1          {
+ 331   2            ack_received = false;
+ 332   2          }
+ 333   1      
+ 334   1          while (data_len-- > 0 && ack_received == true)
+ 335   1          {
+ 336   2            HAL_W2_WRITE(*data_ptr++);
+ 337   2            w2_status = hal_w2_wait_data_ready_ISR();
+ 338   2            if (w2_status & W2CON1_FLAG_NACK)
+ 339   2            {
+ 340   3              ack_received = false;
+ 341   3            }
+ 342   2          }
+ 343   1          HAL_W2_ISSUE_STOP_COND;
+ 344   1      
+ 345   1          return ack_received;
+ 346   1      }
+ 347          
+ 348          bool i2c_mpu_readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data_ptr) {
+ 349   1          return i2c_mpu_readBytes(devAddr, regAddr, 1, data_ptr);
+ 350   1      }
+ 351          
+ 352          bool i2c_mpu_readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t data_len, uint8_t *data_ptr) {
+ 353   1      
+ 354   1          uint8_t w2_status;
+ 355   1          bool ack_received;
+ 356   1      
+ 357   1          ack_received = hal_w2_init_transfer(devAddr, HAL_W2_DIR_WRITE);
+ 358   1          HAL_W2_WRITE(regAddr);
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 7   
+
+ 359   1          w2_status = hal_w2_wait_data_ready_ISR();
+ 360   1          if (w2_status & W2CON1_FLAG_NACK)
+ 361   1          {
+ 362   2            ack_received = false;
+ 363   2          }
+ 364   1          //XXX: Não to usando o stop contition
+ 365   1          //De acordo com a pag 36 do datasheet
+ 366   1      
+ 367   1          ack_received = hal_w2_init_transfer(devAddr, HAL_W2_DIR_READ);
+ 368   1      
+ 369   1          if (ack_received == false)
+ 370   1          {
+ 371   2            // This situation (NACK received on bus while trying to read from a slave) leads to a deadlock in th
+             -e 2-wire interface.
+ 372   2            hal_w2_soft_reset(); // Workaround for the deadlock
+ 373   2            //XXX: depois desse reset as coisas vao dar certo? nao preciro reconfigurar o endereço do registrad
+             -or ?
+ 374   2          }
+ 375   1      
+ 376   1          while (data_len-- && ack_received)
+ 377   1          {
+ 378   2            if (data_len == 0)
+ 379   2            {
+ 380   3              HAL_W2_ISSUE_STOP_COND;
+ 381   3            }
+ 382   2      
+ 383   2            w2_status = hal_w2_wait_data_ready_ISR();
+ 384   2      
+ 385   2            *data_ptr++ = HAL_W2_READ();
+ 386   2            ack_received = !(w2_status & W2CON1_FLAG_NACK);
+ 387   2          }
+ 388   1      
+ 389   1          return ack_received;
+ 390   1      }
+ 391          
+ 392          //NOTE: part 2 - done
+ 393          bool i2c_mpu_writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data_to_write){
+ 394   1          uint8_t b;
+ 395   1          i2c_mpu_readByte(devAddr, regAddr, &b);
+ 396   1          b = (data_to_write != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
+ 397   1          return i2c_mpu_writeByte(devAddr, regAddr, b);
+ 398   1      }
+ 399          bool i2c_mpu_writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t data_length, uint8_t da
+             -ta_to_write){
+ 400   1          //      010 value to write
+ 401   1          // 76543210 bit numbers
+ 402   1          //    xxx   args: bitStart=4, length=3
+ 403   1          // 00011100 mask byte
+ 404   1          // 10101111 original value (sample)
+ 405   1          // 10100011 original & ~mask
+ 406   1          // 10101011 masked | value
+ 407   1          uint8_t b;
+ 408   1          if (i2c_mpu_readByte(devAddr, regAddr, &b) != 0) {
+ 409   2              uint8_t mask = ((1 << data_length) - 1) << (bitStart - data_length + 1);
+ 410   2              data_to_write <<= (bitStart - data_length + 1); // shift data into correct position
+ 411   2              data_to_write &= mask; // zero all non-important bits in data
+ 412   2              b &= ~(mask); // zero all important bits in existing byte
+ 413   2              b |= data_to_write; // combine data with existing byte
+ 414   2              return i2c_mpu_writeByte(devAddr, regAddr, b);
+ 415   2          } else {
+ 416   2              return false;
+ 417   2          }
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 8   
+
+ 418   1      }
+ 419          int8_t i2c_mpu_readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data_ptr){
+ 420   1          uint8_t b;
+ 421   1          uint8_t count = i2c_mpu_readByte(devAddr, regAddr, &b);
+ 422   1          *data_ptr = b & (1 << bitNum);
+ 423   1          return count;
+ 424   1      }
+ 425          int8_t i2c_mpu_readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t data_length, uint8_t *
+             -data_ptr){
+ 426   1          // 01101001 read byte
+ 427   1          // 76543210 bit numbers
+ 428   1          //    xxx   args: bitStart=4, length=3
+ 429   1          //    010   masked
+ 430   1          //   -> 010 shifted
+ 431   1          uint8_t count, b;
+ 432   1          if ((count = i2c_mpu_readByte(devAddr, regAddr, &b)) != 0) {
+ 433   2              uint8_t mask = ((1 << data_length) - 1) << (bitStart - data_length + 1);
+ 434   2              b &= mask;
+ 435   2              b >>= (bitStart - data_length + 1);
+ 436   2              *data_ptr = b;
+ 437   2          }
+ 438   1          return count;
+ 439   1      }
+ 440          
+ 441          //NOTE: part 3 - done
+ 442          bool i2c_mpu_writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data_to_write){
+ 443   1          return i2c_mpu_writeWords(devAddr, regAddr, 1, &data_to_write);
+ 444   1      }
+ 445          bool i2c_mpu_writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t data_length, uint16_t *data_ptr){
+ 446   1          //DONE: Start Bit + Adress Write
+ 447   1          //DONE: Registrador
+ 448   1          //DONE: write Msb, (colocar >> 8)
+ 449   1          //DONE: Write Lsb
+ 450   1          //DONE: next position and repeat ///XXX: TEST PENDING
+ 451   1          //DONE: End Bit
+ 452   1          //DONE: return status
+ 453   1          uint8_t w2_status;
+ 454   1          bool ack_received;
+ 455   1      
+ 456   1          ack_received = hal_w2_init_transfer(devAddr, HAL_W2_DIR_WRITE);
+ 457   1          HAL_W2_WRITE(regAddr);
+ 458   1          w2_status = hal_w2_wait_data_ready_ISR();
+ 459   1          if (w2_status & W2CON1_FLAG_NACK)
+ 460   1          {
+ 461   2            ack_received = false;
+ 462   2          }
+ 463   1      
+ 464   1          while (data_length-- > 0 && ack_received == true)
+ 465   1          {
+ 466   2            HAL_W2_WRITE((uint8_t)(*data_ptr>>8));//MSB
+ 467   2            w2_status = hal_w2_wait_data_ready_ISR();
+ 468   2            if (w2_status & W2CON1_FLAG_NACK)
+ 469   2            {
+ 470   3              ack_received = false;
+ 471   3            }
+ 472   2            if(ack_received){
+ 473   3                HAL_W2_WRITE((uint8_t)*data_ptr++);//LSB
+ 474   3                w2_status = hal_w2_wait_data_ready_ISR();
+ 475   3                if (w2_status & W2CON1_FLAG_NACK)
+ 476   3                {
+ 477   4                  ack_received = false;
+ 478   4                }
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 9   
+
+ 479   3            } else {
+ 480   3                break;
+ 481   3            }
+ 482   2          }
+ 483   1          HAL_W2_ISSUE_STOP_COND;
+ 484   1      
+ 485   1          return ack_received;
+ 486   1      }
+ 487          
+ 488          //int8_t i2c_mpu_readWord(uint8_t devAddr, uint8_t regAddr, uint16_t *data_ptr) {
+ 489          //    return i2c_mpu_readWords(devAddr, regAddr, 1, data_ptr);
+ 490          //}
+ 491          
+ 492          //int8_t i2c_mpu_readWords(uint8_t devAddr, uint8_t regAddr, uint8_t data_length, uint16_t *data_ptr){
+ 493          //    //DONE: Start Bit + Adress Write
+ 494          //    //DONE: Registrador
+ 495          //    //DONE: Start Bit + Adress Read
+ 496          //    //DONE: Read Msb, e colocar << 8
+ 497          //    //DONE: Read Lsb e jogar na parte LSB
+ 498          //    //DONE: next position and repeat //XXX: TEST PENDING
+ 499          //    //DONE: End Bit
+ 500          //    //DNE: return status
+ 501          
+ 502          //    uint8_t w2_status;
+ 503          //    bool ack_received;
+ 504          
+ 505          //    ack_received = hal_w2_init_transfer(devAddr, HAL_W2_DIR_WRITE);
+ 506          //    HAL_W2_WRITE(regAddr);
+ 507          //    w2_status = hal_w2_wait_data_ready_ISR();
+ 508          //    if (w2_status & W2CON1_FLAG_NACK)
+ 509          //    {
+ 510          //      ack_received = false;
+ 511          //    }
+ 512          //    //XXX: Não to usando o stop contition
+ 513          //    //De acordo com a pag 36 do datasheet
+ 514          
+ 515          //    ack_received = hal_w2_init_transfer(devAddr, HAL_W2_DIR_READ);
+ 516          
+ 517          //    if (ack_received == false)
+ 518          //    {
+ 519          //      // This situation (NACK received on bus while trying to read from a slave) leads to a deadlock in 
+             -the 2-wire interface.
+ 520          //      hal_w2_soft_reset(); // Workaround for the deadlock
+ 521          //      //XXX: depois desse reset as coisas vao dar certo? nao preciro reconfigurar o endereço do registr
+             -ador ?
+ 522          //    }
+ 523          
+ 524          //    while (data_length-- && ack_received)
+ 525          //    {
+ 526          //      if (data_length == 0)
+ 527          //      {
+ 528          //        HAL_W2_ISSUE_STOP_COND;
+ 529          //      }
+ 530          
+ 531          //      w2_status = hal_w2_wait_data_ready_ISR();
+ 532          
+ 533          //      *data_ptr =((uint16_t) HAL_W2_READ()) << 8; //MSB
+ 534          //      ack_received = !(w2_status & W2CON1_FLAG_NACK);
+ 535          
+ 536          //      if(ack_received){
+ 537          //          w2_status = hal_w2_wait_data_ready_ISR();
+ 538          
+C51 COMPILER V9.57.0.0   HAL_W2_ISR                                                        07/04/2018 13:40:58 PAGE 10  
+
+ 539          //          *data_ptr++ |= ((uint16_t) HAL_W2_READ()); //LSB
+ 540          //          ack_received = !(w2_status & W2CON1_FLAG_NACK);
+ 541          //      } else {
+ 542          //          break;
+ 543          //      }
+ 544          //    }
+ 545          
+ 546          //    return ack_received;
+ 547          //}
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1100    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2      75
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

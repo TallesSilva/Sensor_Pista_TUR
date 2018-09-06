@@ -1,0 +1,16 @@
+C51 COMPILER V9.57.0.0   HAL_DELAY                                                         06/19/2018 01:04:49 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE HAL_DELAY
+OBJECT MODULE PLACED IN .\Objects\hal_delay.obj
+COMPILER INVOKED BY: D:\Programas\Keil C51\C51\BIN\C51.EXE C:\Nordic Semiconductor\nRFgo SDK 2.3.0.10040\source_code\hal
+                    -\hal_delay.c OPTIMIZE(8,SPEED) BROWSE INCDIR(C:\Nordic Semiconductor\nRFgo SDK 2.3.0.10040\source_code\hal\nrf24le1;C:\N
+                    -ordic Semiconductor\nRFgo SDK 2.3.0.10040\source_code\hal;C:\Nordic Semiconductor\nRFgo SDK 2.3.0.10040\source_code\comp
+                    -iler\common) DEBUG OBJECTEXTEND PRINT(.\Listings\hal_delay.lst) TABS(2) OBJECT(.\Objects\hal_delay.obj)
+
+line level    source
+
+*** ERROR C318 OF C:\Nordic Semiconductor\nRFgo SDK 2.3.0.10040\source_code\hal\hal_delay.c: can't open file 'C:\Nordic 
+             -Semiconductor\nRFgo SDK 2.3.0.10040\source_code\hal\hal_delay.c'
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)

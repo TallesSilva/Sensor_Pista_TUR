@@ -1,0 +1,6 @@
+".\Objects\STARTUP.obj",
+".\Objects\exemplo_timer.obj",
+".\Objects\hal_delay.obj" 
+TO ".\Objects\exemplo_timer" 
+PRINT(".\Listings\exemplo_timer.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

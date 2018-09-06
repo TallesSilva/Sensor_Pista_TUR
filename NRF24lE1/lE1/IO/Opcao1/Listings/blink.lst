@@ -1,0 +1,64 @@
+C51 COMPILER V9.57.0.0   BLINK                                                             06/19/2018 01:05:44 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE BLINK
+OBJECT MODULE PLACED IN .\Objects\blink.obj
+COMPILER INVOKED BY: D:\Programas\Keil C51\C51\BIN\C51.EXE blink.c OPTIMIZE(8,SPEED) BROWSE INCDIR(C:\Nordic Semiconduct
+                    -or\nRFgo SDK 2.3.0.10040\source_code\hal\nrf24le1;C:\Nordic Semiconductor\nRFgo SDK 2.3.0.10040\source_code\hal;C:\Nordi
+                    -c Semiconductor\nRFgo SDK 2.3.0.10040\source_code\compiler\common) DEBUG OBJECTEXTEND PRINT(.\Listings\blink.lst) TABS(2
+                    -) OBJECT(.\Objects\blink.obj)
+
+line level    source
+
+*** WARNING C500 IN LINE 1 OF blink.c: LICENSE ERROR (R230(2): CONNECT TO UVISION KERNEL FAILED)
+
+   1          #include<Nordic\reg24le1.h> // Registradores do nrf24le1
+   2          
+   3          /**
+   4           * Função de inicialização das funções que serão utilizadas
+   5           */
+   6          void setup(){
+   7   1          // Inicializa os pinos do Port 0 e Port 1 todos como entradas.
+   8   1          P0DIR = 0xFF; P1DIR = 0xFF;
+   9   1          // Configura o pino 3 do Port 0 como saída
+  10   1          P0DIR &= ~(1 << 3);
+  11   1      }
+  12          
+  13          /**
+  14           * Está função é chamada repetidivamente.
+  15           */
+  16          void loop(){
+  17   1        if(P14 == 1)
+  18   1        {
+  19   2          P03 = 1;
+  20   2        }
+  21   1        else
+  22   1        {
+  23   2          P03 = 0;
+  24   2        }
+  25   1      } 
+  26          
+  27          /**
+  28           * Função Main, indicando como funcionará o sitema.
+  29           * Ele está simplificado para funcionar semelhante ao arduino.
+  30           */
+  31          void main(){
+  32   1          setup();
+  33   1          while(1){
+  34   2              loop();
+  35   2          }
+  36   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     27    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

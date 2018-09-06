@@ -1,0 +1,87 @@
+C51 COMPILER V9.57.0.0   INTERRUPT                                                         07/05/2018 11:34:58 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE INTERRUPT
+OBJECT MODULE PLACED IN .\Objects\interrupt.obj
+COMPILER INVOKED BY: D:\Programas\Keil C51\C51\BIN\C51.EXE interrupt.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\Exemple_interr
+                    -upt\nrf;..\Exemple_interrupt\nrf\source_code\compiler\common;..\Exemple_interrupt\nrf\source_code\hal\nrf24le1;..\Exempl
+                    -e_interrupt\nrf\source_code\hal) DEBUG OBJECTEXTEND PRINT(.\Listings\interrupt.lst) TABS(2) OBJECT(.\Objects\interrupt.o
+                    -bj)
+
+line level    source
+
+*** WARNING C500 IN LINE 1 OF interrupt.c: LICENSE ERROR (R230(2): CONNECT TO UVISION KERNEL FAILED)
+
+   1          #include <Nordic\reg24le1.h>
+   2          #include <hal_delay.h>
+   3          #include <stdint.h>
+   4          #include <nRF-SPICommands.h>
+   5          
+   6          
+   7          #define LED P03
+   8          // habilitando timer1 no mode 1-16bits a 75us
+   9          
+  10          void TRM0_IRQ() interrupt INTERRUPT_TMR0
+*** ERROR C141 IN LINE 10 OF interrupt.c: syntax error near 'INTERRUPT_TMR0', expected 'const'
+  11          {
+*** ERROR C132 IN LINE 11 OF interrupt.c: 'INTERRUPT_TMR0': not in formal parameter list
+*** ERROR C141 IN LINE 11 OF interrupt.c: syntax error near '{'
+  12            count++;
+*** ERROR C132 IN LINE 12 OF interrupt.c: 'count': not in formal parameter list
+  13            TH0=0xFF; 
+*** ERROR C244 IN LINE 13 OF interrupt.c: 'TH0': can't initialize, bad type or class
+*** ERROR C132 IN LINE 13 OF interrupt.c: 'TH0': not in formal parameter list
+  14            TL0=0xFF;
+*** ERROR C244 IN LINE 14 OF interrupt.c: 'TL0': can't initialize, bad type or class
+*** ERROR C132 IN LINE 14 OF interrupt.c: 'TL0': not in formal parameter list
+  15            if(count == 1000000 ){ 
+*** ERROR C141 IN LINE 15 OF interrupt.c: syntax error near 'if'
+*** ERROR C141 IN LINE 15 OF interrupt.c: syntax error near '==', expected ')'
+  16              LED = !(LED);
+*** ERROR C231 IN LINE 16 OF interrupt.c: 'P03': redefinition
+*** ERROR C247 IN LINE 16 OF interrupt.c: non-address/-constant initializer
+*** ERROR C231 IN LINE 16 OF interrupt.c: 'P03': redefinition
+  17              count = 0;
+  18            }
+*** ERROR C141 IN LINE 18 OF interrupt.c: syntax error near '}'
+  19          }
+  20          
+  21          void start_T0(void) {
+  22   1        TMOD=0x31;            // Select Timer 1 --> STOPPED, Timer 0 --> TIMER/16 bits
+  23   1        TH0=0xFF; 
+  24   1        TL0=0xFF;
+  25   1        ET0=1;                // Active interrupt on Timer 0
+  26   1        EA=1;                 // Active all interrupts
+  27   1        TR0=1;                // Timer 0 --> RUN
+  28   1      }
+  29          
+  30          void setup()
+  31          {
+  32   1      
+  33   1        P0DIR = 0xFF;
+  34   1        P1DIR = 0xFF;
+  35   1      
+  36   1        P0DIR &= ~(1<<3);
+  37   1        
+C51 COMPILER V9.57.0.0   INTERRUPT                                                         07/05/2018 11:34:58 PAGE 2   
+
+  38   1        start_T0();
+  39   1        start_interrupt();
+  40   1      
+  41   1      }
+  42          
+  43          void loop()
+  44          {
+  45   1          
+  46   1      }
+  47          
+  48          void main()
+  49          {   int count;
+  50   1        setup();
+  51   1        while(1)
+  52   1        {
+  53   2        loop();
+  54   2        }
+  55   1      }
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  14 ERROR(S)

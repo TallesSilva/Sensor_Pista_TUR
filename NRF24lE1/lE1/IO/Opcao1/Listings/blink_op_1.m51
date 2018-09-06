@@ -1,0 +1,114 @@
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    06/19/2018  01:05:44  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
+D:\PROGRAMAS\KEIL C51\C51\BIN\BL51.EXE .\Objects\blink.obj TO .\Objects\blink_op_1 PRINT (.\Listings\blink_op_1.m51) RAM
+>> SIZE (256) DISABLEWARNING (15, 16)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  .\Objects\blink.obj (BLINK)
+  D:\PROGRAMAS\KEIL C51\C51\LIB\C51S.LIB (?C_STARTUP)
+
+
+LINK MAP OF MODULE:  .\Objects\blink_op_1 (BLINK)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            IDATA   0008H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+                    0003H     07FDH                  *** GAP ***
+            CODE    0800H     000CH     UNIT         ?C_C51STARTUP
+            CODE    080CH     000AH     UNIT         ?PR?SETUP?BLINK
+            CODE    0816H     0009H     UNIT         ?PR?LOOP?BLINK
+            CODE    081FH     0008H     UNIT         ?PR?MAIN?BLINK
+
+
+
+OVERLAY MAP OF MODULE:   .\Objects\blink_op_1 (BLINK)
+
+
+SEGMENT
+  +--> CALLED SEGMENT
+---------------------
+?C_C51STARTUP
+  +--> ?PR?MAIN?BLINK
+
+?PR?MAIN?BLINK
+  +--> ?PR?SETUP?BLINK
+  +--> ?PR?LOOP?BLINK
+
+
+
+SYMBOL TABLE OF MODULE:  .\Objects\blink_op_1 (BLINK)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        BLINK
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  06/19/2018  01:05:44  PAGE 2
+
+
+  D:00B0H         PUBLIC        P3
+  D:00A8H         PUBLIC        IEN0
+  D:00B8H         PUBLIC        IEN1
+  C:081FH         PUBLIC        main
+  B:0080H.3       PUBLIC        P03
+  C:080CH         PUBLIC        setup
+  B:0090H.4       PUBLIC        P14
+  D:0088H         PUBLIC        TCON
+  C:0816H         PUBLIC        loop
+  D:0093H         PUBLIC        P0DIR
+  D:0094H         PUBLIC        P1DIR
+  D:0098H         PUBLIC        S0CON
+  D:00D8H         PUBLIC        ADCON
+  D:00C8H         PUBLIC        T2CON
+  D:00F8H         PUBLIC        FSR
+  D:00E8H         PUBLIC        RFCON
+  D:00D0H         PUBLIC        PSW
+  D:00C0H         PUBLIC        IRCON
+  -------         PROC          SETUP
+  C:080CH         LINE#         6
+  C:080CH         LINE#         8
+  C:0812H         LINE#         10
+  C:0815H         LINE#         11
+  -------         ENDPROC       SETUP
+  -------         PROC          LOOP
+  C:0816H         LINE#         16
+  C:0816H         LINE#         17
+  C:0819H         LINE#         18
+  C:0819H         LINE#         19
+  C:081BH         LINE#         20
+  C:081CH         LINE#         22
+  C:081CH         LINE#         23
+  C:081EH         LINE#         24
+  C:081EH         LINE#         25
+  -------         ENDPROC       LOOP
+  -------         PROC          MAIN
+  C:081FH         LINE#         31
+  C:081FH         LINE#         32
+  C:0822H         LINE#         33
+  C:0822H         LINE#         34
+  C:0825H         LINE#         35
+  -------         ENDPROC       MAIN
+  -------         ENDMOD        BLINK
+
+******************************************************************************
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 001BH BYTE ( 1%) *
+******************************************************************************
+
+Program Size: data=9.0 xdata=0 code=42
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

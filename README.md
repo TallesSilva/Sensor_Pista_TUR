@@ -1,2 +1,1 @@
-# Sensor_Pista_TUR
-Projeto final da rede de sensores sem fio
+# Software_PyQT_Serial_Arduino

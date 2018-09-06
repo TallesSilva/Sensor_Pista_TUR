@@ -1,0 +1,36 @@
+C51 COMPILER V9.57.0.0   OIN                                                               07/05/2018 13:14:57 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE OIN
+OBJECT MODULE PLACED IN .\Objects\oin.obj
+COMPILER INVOKED BY: D:\Programas\Keil C51\C51\BIN\C51.EXE oin.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\nrf;.\nrf\source_code
+                    -\compiler\common;.\nrf\source_code\hal;.\nrf\source_code\hal\nrf24le1) DEBUG OBJECTEXTEND PRINT(.\Listings\oin.lst) TABS
+                    -(2) OBJECT(.\Objects\oin.obj)
+
+line level    source
+
+   1          #include <timer0.h>
+   2          #include <reg24le1.h>
+   3          #include <hal_delay.h>  
+   4          
+   5          #define LED P03 
+   6          
+   7          EXT_INT0_ISR()  { interrupt
+*** ERROR C141 IN LINE 7 OF oin.c: syntax error near 'interrupt'
+   8   1      LED = !LED;
+   9   1      }
+  10          void main()
+  11          { IEN0 = 0x00;
+  12   1        TCON = 0x20;
+  13   1        TMOD = 0x31;
+  14   1        IEN0 = 0x02;
+  15   1        TH0 = 0x00;
+  16   1        TL0 = 0x00;
+  17   1        TR0 = 1;
+  18   1        LED = 1;
+  19   1        while(1)
+  20   1        {
+  21   2        }
+  22   1      }
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)

@@ -1,0 +1,3 @@
+".\Objects\oin.obj" 
+TO ".\Objects\ta tarde" 
+PRINT(".\Listings\ta tarde.m51") RAMSIZE(256) 
